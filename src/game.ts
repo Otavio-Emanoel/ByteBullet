@@ -77,8 +77,9 @@ export class Game {
 
     // Eventos de disparo
     this.setupShootEvents();
-    // Inicializa o chão procedural e atualiza conforme o jogador se move
-    // (deve ser chamada apenas uma vez, fora de createScene)
+
+    // Inicializa o chão procedural e colisões do terreno
+    this.initProceduralGround();
   }
 
   // Inicializa o chão procedural e atualiza conforme o jogador se move
