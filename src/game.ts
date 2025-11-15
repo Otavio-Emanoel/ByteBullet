@@ -65,8 +65,20 @@ export class Game {
     const light = new HemisphericLight('light', new Vector3(0, 1, 0), this.scene);
     light.intensity = 0.8;
 
-    // --- Procedural Chunked Ground ---
-    this.initProceduralGround();
+
+    // Cria a esfera base do projétil (invisível, usada como modelo)
+    this.projectileBase = MeshBuilder.CreateSphere('projectileBase', { diameter: 0.2 }, this.scene);
+    this.projectileBase.isVisible = false;
+
+    this.scene.gravity = new Vector3(0, -0.9, 0);
+    this.scene.collisionsEnabled = true;
+
+    // Eventos de disparo
+    this.setupShootEvents();
+    // Inicializa o chão procedural e atualiza conforme o jogador se move
+    // (deve ser chamada apenas uma vez, fora de createScene)
+  }
+
   // Inicializa o chão procedural e atualiza conforme o jogador se move
   private initProceduralGround(): void {
     this.updateChunks();
@@ -121,77 +133,6 @@ export class Game {
       if (!needed.has(key)) {
         mesh.dispose();
         this.loadedChunks.delete(key);
-      }
-    }
-  }
-
-    // Cria a esfera base do projétil (invisível, usada como modelo)
-    this.projectileBase = MeshBuilder.CreateSphere('projectileBase', { diameter: 0.2 }, this.scene);
-    this.projectileBase.isVisible = false;
-
-    this.scene.gravity = new Vector3(0, -0.9, 0);
-    this.scene.collisionsEnabled = true;
-
-    // Eventos de disparo
-    this.setupShootEvents();
-    // --- Procedural Chunked Ground ---
-    private readonly chunkSize = 20;
-    private readonly chunkRange = 2; // Quantos chunks para cada lado do jogador
-    private loadedChunks = new Map<string, AbstractMesh>();
-
-    private initProceduralGround(): void {
-      this.updateChunks();
-      // Atualiza os chunks conforme o jogador se move
-      this.scene.onBeforeRenderObservable.add(() => {
-        this.updateChunks();
-      });
-    }
-
-    private getChunkKey(x: number, z: number): string {
-      return `${x},${z}`;
-    }
-
-    private updateChunks(): void {
-      if (!this.camera) return;
-      const camPos = this.camera.position;
-      const playerChunkX = Math.floor(camPos.x / this.chunkSize);
-      const playerChunkZ = Math.floor(camPos.z / this.chunkSize);
-
-      const needed = new Set<string>();
-      for (let dx = -this.chunkRange; dx <= this.chunkRange; dx++) {
-        for (let dz = -this.chunkRange; dz <= this.chunkRange; dz++) {
-          const cx = playerChunkX + dx;
-          const cz = playerChunkZ + dz;
-          const key = this.getChunkKey(cx, cz);
-          needed.add(key);
-          if (!this.loadedChunks.has(key)) {
-            // Cria um chunk procedural
-            const mesh = MeshBuilder.CreateGround(`ground_${key}`,
-              { width: this.chunkSize, height: this.chunkSize, subdivisions: 2 },
-              this.scene);
-            mesh.position.x = cx * this.chunkSize;
-            mesh.position.z = cz * this.chunkSize;
-            mesh.checkCollisions = true;
-            // Exemplo de variação procedural: altura levemente ruidosa
-            const vertices = mesh.getVerticesData("position");
-            if (vertices) {
-              for (let i = 0; i < vertices.length; i += 3) {
-                // Pequena variação de altura (pode trocar por Perlin noise depois)
-                vertices[i + 1] = Math.sin((vertices[i] + mesh.position.x) * 0.1) * 0.2 +
-                                 Math.cos((vertices[i + 2] + mesh.position.z) * 0.1) * 0.2;
-              }
-              mesh.updateVerticesData("position", vertices);
-            }
-            this.loadedChunks.set(key, mesh);
-          }
-        }
-      }
-      // Remove chunks que não são mais necessários
-      for (const [key, mesh] of this.loadedChunks.entries()) {
-        if (!needed.has(key)) {
-          mesh.dispose();
-          this.loadedChunks.delete(key);
-        }
       }
     }
   }
