@@ -7,6 +7,8 @@ import {
   VirtualJoysticksCamera,
   Vector3,
   AbstractMesh,
+  StandardMaterial,
+  Color3,
 } from 'babylonjs';
 import 'babylonjs-loaders';
 
@@ -114,6 +116,10 @@ export class Game {
           mesh.position.x = cx * this.chunkSize;
           mesh.position.z = cz * this.chunkSize;
           mesh.checkCollisions = true;
+          // Material verde para o chão
+          const mat = new StandardMaterial(`groundMat_${key}`, this.scene);
+          mat.diffuseColor = new Color3(0.2 + Math.random() * 0.1, 0.7 + Math.random() * 0.2, 0.2 + Math.random() * 0.1);
+          mesh.material = mat;
           // Exemplo de variação procedural: altura levemente ruidosa
           const vertices = mesh.getVerticesData("position");
           if (vertices) {
