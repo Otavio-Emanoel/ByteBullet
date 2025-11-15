@@ -1,6 +1,6 @@
 import {
-  ArcRotateCamera,
   Engine,
+  FreeCamera,
   HemisphericLight,
   MeshBuilder,
   Scene,
@@ -26,13 +26,13 @@ export class Game {
   }
 
   private createScene(): void {
-    const camera = new ArcRotateCamera('camera', Math.PI / 2, Math.PI / 3, 10, Vector3.Zero(), this.scene);
+    const camera = new FreeCamera('camera', new Vector3(0, 1.8, -5), this.scene);
+    camera.setTarget(Vector3.Zero());
     camera.attachControl(this.canvas, true);
 
     const light = new HemisphericLight('light', new Vector3(0, 1, 0), this.scene);
     light.intensity = 0.8;
 
     MeshBuilder.CreateGround('ground', { width: 20, height: 20 }, this.scene);
-    MeshBuilder.CreateBox('player', { size: 1 }, this.scene).position.y = 0.5;
   }
 }
