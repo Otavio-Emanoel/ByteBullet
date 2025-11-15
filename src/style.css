@@ -18,3 +18,24 @@ body {
   touch-action: none;
   display: block;
 }
+
+/* Mobile UI buttons */
+.hud-btn {
+  position: fixed;
+  z-index: 1000;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(20, 20, 20, 0.6);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  user-select: none;
+}
+
+.hud-btn:active { transform: scale(0.96); }
+
+.fire-btn { right: 20px; bottom: 24px; }
+.jump-btn { right: 20px; bottom: 100px; }

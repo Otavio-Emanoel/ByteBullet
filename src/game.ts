@@ -9,6 +9,7 @@ import {
   AbstractMesh,
   StandardMaterial,
   Color3,
+  Ray,
 } from 'babylonjs';
 import 'babylonjs-loaders';
 
@@ -64,6 +65,17 @@ export class Game {
     camera.attachControl(this.canvas, true);
     this.camera = camera;
 
+    // Simple gun model attached to camera (first-person)
+    const gun = MeshBuilder.CreateBox('gun', { width: 0.12, height: 0.08, depth: 0.4 }, this.scene);
+    gun.parent = camera;
+    gun.position = new Vector3(0.25, -0.18, 0.6);
+    gun.rotation = new Vector3(0.05, 0.3, 0);
+    gun.isPickable = false;
+    gun.checkCollisions = false;
+    const gunMat = new StandardMaterial('gunMat', this.scene);
+    gunMat.diffuseColor = new Color3(0.15, 0.15, 0.18);
+    gun.material = gunMat;
+
     const light = new HemisphericLight('light', new Vector3(0, 1, 0), this.scene);
     light.intensity = 0.8;
 
@@ -80,6 +92,9 @@ export class Game {
 
     // Inicializa o chão procedural e colisões do terreno
     this.initProceduralGround();
+
+    // Mobile HUD buttons (only on touch devices)
+    this.setupMobileButtons(isTouchDevice);
   }
 
   // Inicializa o chão procedural e atualiza conforme o jogador se move
@@ -197,5 +212,57 @@ export class Game {
         }
       }
     });
+
+    // Teclado: pular com espaço
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        this.jump();
+      }
+      // Atalho: clique com Enter para teste
+      if (e.code === 'Enter') {
+        this.shoot();
+      }
+    });
+  }
+
+  private setupMobileButtons(isTouchDevice: boolean): void {
+    if (!isTouchDevice) return;
+    // Create buttons only once
+    const existingFire = document.getElementById('bb-fire-btn');
+    const existingJump = document.getElementById('bb-jump-btn');
+    if (existingFire || existingJump) return;
+
+    const mkBtn = (id: string, label: string, className: string, onDown: () => void) => {
+      const btn = document.createElement('button');
+      btn.id = id;
+      btn.className = `hud-btn ${className}`;
+      btn.innerText = label;
+      btn.addEventListener('pointerdown', (e) => { e.preventDefault(); onDown(); });
+      // Prevent losing pointer lock etc.
+      btn.addEventListener('pointerup', (e) => e.preventDefault());
+      document.body.appendChild(btn);
+      return btn;
+    };
+
+    mkBtn('bb-fire-btn', 'FIRE', 'fire-btn', () => this.shoot());
+    mkBtn('bb-jump-btn', 'JUMP', 'jump-btn', () => this.jump());
+  }
+
+  private jump(): void {
+    if (!this.camera) return;
+    // Only jump if grounded
+    if (!this.isGrounded()) return;
+    // Apply upward impulse using cameraDirection
+    (this.camera as any).cameraDirection = (this.camera as any).cameraDirection || new Vector3();
+    (this.camera as any).cameraDirection.y += 0.35; // tweak for feel
+  }
+
+  private isGrounded(): boolean {
+    if (!this.camera) return false;
+    const origin = this.camera.position.clone();
+    const ray = new Ray(origin, new Vector3(0, -1, 0), 1.2);
+    const pick = this.scene.pickWithRay(ray, (m) => m.checkCollisions === true);
+    return !!(pick && pick.hit && pick.distance !== undefined && pick.distance < 1.0);
   }
 }
