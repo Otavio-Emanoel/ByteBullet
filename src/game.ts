@@ -4,6 +4,7 @@ import {
   MeshBuilder,
   Scene,
   UniversalCamera,
+  VirtualJoysticksCamera,
   Vector3,
 } from 'babylonjs';
 import 'babylonjs-loaders';
@@ -26,16 +27,31 @@ export class Game {
   }
 
   private createScene(): void {
-    const camera = new UniversalCamera('camera', new Vector3(0, 1.8, -5), this.scene);
+    const isTouchDevice = ((): boolean => {
+      return (
+        (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) ||
+        'ontouchstart' in window ||
+        /Mobi|Android|iPhone|iPad|iPod|Tablet|PlayBook|Silk|Opera Mini/i.test(navigator.userAgent)
+      );
+    })();
+
+    let camera: UniversalCamera | VirtualJoysticksCamera;
+
+    if (isTouchDevice) {
+      camera = new VirtualJoysticksCamera('camera', new Vector3(0, 1.8, -5), this.scene);
+    } else {
+      camera = new UniversalCamera('camera', new Vector3(0, 1.8, -5), this.scene);
+      camera.keysUp = [87, 38]; // W + ArrowUp
+      camera.keysDown = [83, 40]; // S + ArrowDown
+      camera.keysLeft = [65, 37]; // A + ArrowLeft
+      camera.keysRight = [68, 39]; // D + ArrowRight
+    }
+
     camera.checkCollisions = true;
     camera.applyGravity = true;
     camera.ellipsoid = new Vector3(0.5, 0.9, 0.5);
     camera.speed = 0.5;
     camera.setTarget(Vector3.Zero());
-    camera.keysUp = [87, 38]; // W + ArrowUp
-    camera.keysDown = [83, 40]; // S + ArrowDown
-    camera.keysLeft = [65, 37]; // A + ArrowLeft
-    camera.keysRight = [68, 39]; // D + ArrowRight
     camera.attachControl(this.canvas, true);
 
     const light = new HemisphericLight('light', new Vector3(0, 1, 0), this.scene);
